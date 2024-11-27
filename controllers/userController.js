@@ -18,48 +18,87 @@ const getCurrentUser = async (req, res) => {
 
 const getAllUsers = async (req, res) => {
   try {
-    const { data: users, error } = await supabase
+    const { page = 1, limit = 20 } = req.query;
+    const offset = (page - 1) * limit;
+
+    const query = supabase
       .from('users')
-      .select('id, email, full_name, user_type, status')
-      .order('created_at', { ascending: false });
+      .select('id, email, full_name, user_type, status', { count: 'exact' })
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1);
+
+    const { data: users, count, error } = await query;
 
     if (error) throw error;
 
-    res.json(users);
+    res.json({
+      pagination: {
+        total: count,
+        pages: Math.ceil(count / limit),
+        current: parseInt(page),
+      },
+      users,
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
 
 const getMerchants = async (req, res) => {
-    try {
-      const { data: merchants, error } = await supabase
-        .from('users')
-        .select('*')
-        .eq('user_type', 'merchant');
-  
-      if (error) throw error;
-  
-      res.json(merchants);
-    } catch (error) {
-      res.status(500).json({ error: error.message });
-    }
-  };
+  try {
+    const { page = 1, limit = 20 } = req.query;
+    const offset = (page - 1) * limit;
+
+    const query = supabase
+      .from('users')
+      .select('*', { count: 'exact' })
+      .eq('user_type', 'merchant')
+      .range(offset, offset + limit - 1);
+
+    const { data: merchants, count, error } = await query;
+
+    if (error) throw error;
+
+    res.json({
+      pagination: {
+        total: count,
+        pages: Math.ceil(count / limit),
+        current: parseInt(page),
+      },
+      merchants,
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
 
 const getAdmins = async (req, res) => {
-    try {
-      const { data: merchants, error } = await supabase
-        .from('users')
-        .select('*')
-        .eq('user_type', 'admin');
-  
-      if (error) throw error;
-  
-      res.json(merchants);
-    } catch (error) {
-      res.status(500).json({ error: error.message });
-    }
-  };
+  try {
+    const { page = 1, limit = 20 } = req.query;
+    const offset = (page - 1) * limit;
+
+    const query = supabase
+      .from('users')
+      .select('*', { count: 'exact' })
+      .eq('user_type', 'admin')
+      .range(offset, offset + limit - 1);
+
+    const { data: admins, count, error } = await query;
+
+    if (error) throw error;
+
+    res.json({
+      pagination: {
+        total: count,
+        pages: Math.ceil(count / limit),
+        current: parseInt(page),
+      },
+      admins,
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
 
 module.exports = {
   getCurrentUser,

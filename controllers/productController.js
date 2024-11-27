@@ -52,13 +52,13 @@ const getProducts = async (req, res) => {
     if (error) throw error;
 
     res.json({
-      products,
       pagination: {
         total: count,
         pages: Math.ceil(count / limit),
         current: parseInt(page),
         limit: parseInt(limit)
-      }
+      },
+      products
     });
   } catch (error) {
     res.status(500).json({ error: error.message });

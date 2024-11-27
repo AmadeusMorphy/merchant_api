@@ -134,6 +134,35 @@ const login = async (req, res) => {
   }
 };
 
-module.exports = { register, login };
+const logout = async (req, res) => {
+  try {
+    const token = req.headers.authorization?.split(' ')[1]; // Extract token from Authorization header
+
+    if (!token) {
+      return res.status(400).json({ error: 'Token is required' });
+    }
+
+    // Decode token to get its expiration time
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    // Add token to blacklist with its expiration time
+    const { error } = await supabase
+      .from('blacklisted_tokens')
+      .insert([{ token, expires_at: new Date(decoded.exp * 1000) }]);
+
+    if (error) {
+      console.error('Error blacklisting token:', error);
+      return res.status(500).json({ error: 'Error during logout' });
+    }
+
+    res.status(200).json({ message: 'Logged out successfully' });
+  } catch (error) {
+    console.error('Logout error:', error);
+    res.status(500).json({ error: 'Failed to log out', details: error.message });
+  }
+};
+
+
+module.exports = { register, login, logout };
 
 

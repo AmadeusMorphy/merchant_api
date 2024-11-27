@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken');
+const supabase = require('../config/supabase');
 
 const authMiddleware = async (req, res, next) => {
   try {
@@ -7,11 +8,23 @@ const authMiddleware = async (req, res, next) => {
       return res.status(401).json({ error: 'No token provided' });
     }
 
+    // Check if the token is blacklisted
+    const { data: blacklistedToken } = await supabase
+      .from('blacklisted_tokens')
+      .select('*')
+      .eq('token', token)
+      .single();
+
+    if (blacklistedToken) {
+      return res.status(401).json({ error: 'Token is invalid or expired' });
+    }
+
+    // Verify the token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded;
+    req.user = decoded; // Attach decoded user info to the request
     next();
   } catch (error) {
-    return res.status(401).json({ error: 'Invalid token' });
+    return res.status(401).json({ error: 'Invalid token', details: error.message });
   }
 };
 
