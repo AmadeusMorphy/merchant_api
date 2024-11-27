@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { getCurrentUser, getAllUsers, getMerchants, getAdmins } = require('../controllers/userController');
-const { authMiddleware, isAdmin } = require('../middleware/auth');
+const { authMiddleware, isAdmin, isMerchant, isAdminOrMerchant } = require('../middleware/auth');
 
 // Route to get current user's information
 router.get('/me', authMiddleware, getCurrentUser);
@@ -10,7 +10,7 @@ router.get('/me', authMiddleware, getCurrentUser);
 router.get('/', authMiddleware, isAdmin, getAllUsers);
 
 // Route to get all merchants (accessible to all authenticated users)
-router.get('/merchants', authMiddleware, getMerchants);
+router.get('/merchants', authMiddleware, isAdminOrMerchant, getMerchants);
 
 router.get('/admins', authMiddleware, isAdmin, getAdmins);
 

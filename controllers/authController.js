@@ -74,8 +74,6 @@ const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    console.log(`Attempting login for email: ${email}`);
-
     // Authenticate user with Supabase Auth
     const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
       email,
@@ -83,56 +81,57 @@ const login = async (req, res) => {
     });
 
     if (authError) {
-      console.error('Supabase Auth error:', authError);
-      return res.status(401).json({ error: 'Invalid credentials', details: authError.message });
+      return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    console.log('Supabase Auth successful, user ID:', authData.user.id);
+    const userId = authData.user.id;
 
-    // Get user data from the users table
-    const { data: userData, error: userError } = await supabase
-      .from('users')
-      .select('*')
-      .eq('id', authData.user.id)
-      .single();
+    // Remove any existing active tokens for this user
+    await supabase
+      .from('active_tokens')
+      .delete()
+      .eq('user_id', userId);
 
-    if (userError) {
-      console.error('Error fetching user data:', userError);
-      return res.status(500).json({ error: 'Error fetching user data', details: userError.message });
-    }
-
-    if (!userData) {
-      console.error('No user data found for ID:', authData.user.id);
-      return res.status(404).json({ error: 'User not found in database' });
-    }
-
-    console.log('User data retrieved successfully');
-
-    // Generate JWT
+    // Generate a new JWT
     const token = jwt.sign(
-      { 
-        userId: userData.id, 
-        email: userData.email,
-        role: userData.user_type 
+      {
+        userId,
+        email: authData.user.email,
+        role: authData.user.user_metadata.user_type,
       },
       process.env.JWT_SECRET,
       { expiresIn: '24h' }
     );
 
+    const expiresAt = new Date();
+    expiresAt.setHours(expiresAt.getHours() + 24); // Token expiry: 24 hours
+
+    // Insert the new token into the `active_tokens` table
+    const { error: insertError } = await supabase
+      .from('active_tokens')
+      .insert([{ user_id: userId, token, expires_at: expiresAt }]);
+
+    if (insertError) {
+      console.error('Failed to store new active token:', insertError);
+      return res.status(500).json({ error: 'Failed to store new active token' });
+    }
+
+    // Return the new token
     res.json({
       token,
       user: {
-        id: userData.id,
-        email: userData.email,
-        fullName: userData.full_name,
-        userType: userData.user_type
-      }
+        id: userId,
+        email: authData.user.email,
+        fullName: authData.user.user_metadata.full_name,
+        userType: authData.user.user_metadata.user_type,
+      },
     });
   } catch (error) {
     console.error('Login error:', error);
     res.status(500).json({ error: 'Internal server error', details: error.message });
   }
 };
+
 
 const logout = async (req, res) => {
   try {
@@ -142,22 +141,48 @@ const logout = async (req, res) => {
       return res.status(400).json({ error: 'Token is required' });
     }
 
-    // Decode token to get its expiration time
+    // Decode token to get user ID and expiration time
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    // Add token to blacklist with its expiration time
-    const { error } = await supabase
-      .from('blacklisted_tokens')
-      .insert([{ token, expires_at: new Date(decoded.exp * 1000) }]);
+    // Remove the token from active_tokens table first
+    const { data: activeTokenData, error: activeTokenError } = await supabase
+      .from('active_tokens')
+      .delete()
+      .eq('user_id', decoded.userId)
+      .eq('token', token)
+      .select();
 
-    if (error) {
-      console.error('Error blacklisting token:', error);
-      return res.status(500).json({ error: 'Error during logout' });
+    if (activeTokenError) {
+      console.error('Error removing active token:', activeTokenError);
+      return res.status(500).json({ error: 'Failed to remove active token', details: activeTokenError.message });
+    }
+
+    // Verify the token was actually removed from active tokens
+    console.log('Active token removal result:', activeTokenData);
+
+    // Add token to blacklist with its expiration time
+    const { error: blacklistError } = await supabase
+      .from('blacklisted_tokens')
+      .insert([{ 
+        token, 
+        expires_at: new Date(decoded.exp * 1000),
+        user_id: decoded.userId 
+      }]);
+
+    if (blacklistError) {
+      console.error('Error blacklisting token:', blacklistError);
+      return res.status(500).json({ error: 'Error during logout', details: blacklistError.message });
     }
 
     res.status(200).json({ message: 'Logged out successfully' });
   } catch (error) {
     console.error('Logout error:', error);
+    
+    // Handle specific JWT verification errors
+    if (error.name === 'JsonWebTokenError') {
+      return res.status(401).json({ error: 'Invalid token' });
+    }
+    
     res.status(500).json({ error: 'Failed to log out', details: error.message });
   }
 };
