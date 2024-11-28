@@ -2,23 +2,61 @@ const supabase = require('../config/supabase');
 
 const createProduct = async (req, res) => {
   try {
-    const { title, description, price, category, images, stock, specifications } = req.body;
+    const { title, description, price, category, images, stock, specifications, ...customFields } = req.body;
     const merchantId = req.user.userId;
 
+    // Base product data
+    const productData = {
+      merchant_id: merchantId,
+      title,
+      description,
+      price,
+      category,
+      images,
+      stock,
+      specifications
+    };
+
+    // Get the current table columns
+    const { data: columnData, error: columnsError } = await supabase
+      .rpc('get_products_columns');
+
+    if (columnsError) {
+      console.error('Error fetching columns:', columnsError);
+      return res.status(500).json({ error: 'Error fetching table columns' });
+    }
+
+    // Function to add a new column
+    const addColumn = async (columnName, columnType) => {
+      const { error: alterError } = await supabase.rpc('add_column_to_products', {
+        column_name: columnName,
+        column_type: columnType
+      });
+
+      if (alterError) {
+        console.error(`Error adding column ${columnName}:`, alterError);
+        return false;
+      }
+      return true;
+    };
+
+    // Check and add any new columns dynamically
+    for (const [key, value] of Object.entries(customFields)) {
+      if (!columnData.includes(key)) {
+        let columnType = typeof value === 'number' ? 'numeric' : 'text';
+        const columnAdded = await addColumn(key, columnType);
+        if (columnAdded) {
+          productData[key] = value;
+        }
+      } else {
+        productData[key] = value;
+      }
+    }
+
+    // Insert the product
     const { data: product, error } = await supabase
       .from('products')
-      .insert([
-        {
-          merchant_id: merchantId,
-          title,
-          description,
-          price,
-          category,
-          images,
-          stock,
-          specifications
-        }
-      ])
+      .insert([productData])
       .select()
       .single();
 
@@ -26,6 +64,7 @@ const createProduct = async (req, res) => {
 
     res.status(201).json(product);
   } catch (error) {
+    console.error('Error creating product:', error);
     res.status(500).json({ error: error.message });
   }
 };
