@@ -87,10 +87,15 @@ const login = async (req, res) => {
     const userId = authData.user.id;
 
     // Remove any existing active tokens for this user
-    await supabase
+    const { error: removeError } = await supabase
       .from('active_tokens')
       .delete()
       .eq('user_id', userId);
+
+    if (removeError) {
+      console.error('Failed to remove existing tokens:', removeError);
+      // Not a critical error, so we'll continue
+    }
 
     // Generate a new JWT
     const token = jwt.sign(

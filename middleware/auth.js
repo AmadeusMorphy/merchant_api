@@ -9,11 +9,17 @@ const authMiddleware = async (req, res, next) => {
       return res.status(401).json({ error: 'No token provided or invalid token format' });
     }
 
+    console.log('Received Token:', token);
     // Check if the token is blacklisted
     const { data: blacklistedTokens, error: blacklistError } = await supabase
       .from('blacklisted_tokens')
       .select('*')
       .eq('token', token);
+
+      console.log('Blacklisted Tokens Check:', {
+        blacklistedTokens,
+        blacklistError
+      }); // Log blacklist check details
 
     if (blacklistError) {
       console.error('Blacklist check error:', blacklistError);
@@ -27,22 +33,24 @@ const authMiddleware = async (req, res, next) => {
       
       // Remove the token from active_tokens
       const { error: activeTokenRemovalError } = await supabase
-        .from('active_tokens')
-        .delete()
-        .eq('user_id', decoded.userId)
-        .eq('token', token);
-
+      .from('active_tokens')
+      .delete()
+      .eq('user_id', decoded.userId)
+      .eq('token', token);
+      
       if (activeTokenRemovalError) {
         console.error('Error removing active token:', activeTokenRemovalError);
       }
-
+      
       return res.status(401).json({ error: 'Token is invalid or expired' });
     }
-
+    
     // Verify the token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.user = decoded; // Attach decoded user info to the request
-
+    
+    console.log('Decoded User:', req.user);
+    
     next(); // Proceed to the next middleware or route handler
   } catch (error) {
     if (error.name === 'TokenExpiredError') {

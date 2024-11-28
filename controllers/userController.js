@@ -51,8 +51,11 @@ const getAllUsers = async (req, res) => {
 
 const getMerchants = async (req, res) => {
   try {
+    console.log('Authenticated User:', req.user);
     const { page = 1, limit = 20 } = req.query;
     const offset = (page - 1) * limit;
+
+    console.log('Merchant Query Params:', { page, limit, offset });
 
     const query = supabase
       .from('users')
@@ -61,6 +64,12 @@ const getMerchants = async (req, res) => {
       .range(offset, offset + limit - 1);
 
     const { data: merchants, count, error } = await query;
+
+    console.log('Merchant Query Result:', {
+      merchants,
+      count,
+      error
+    });
 
     if (error) throw error;
 
@@ -73,6 +82,7 @@ const getMerchants = async (req, res) => {
       merchants,
     });
   } catch (error) {
+    console.error('Full Error in getMerchants:', error);
     res.status(500).json({ error: error.message });
   }
 };

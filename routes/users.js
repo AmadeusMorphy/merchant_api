@@ -10,7 +10,7 @@ router.get('/me', authMiddleware, getCurrentUser);
 router.get('/', authMiddleware, isAdmin, getAllUsers);
 
 // Route to get all merchants (accessible to all authenticated users)
-router.get('/merchants', authMiddleware, isAdminOrMerchant, getMerchants);
+router.get('/merchants', authMiddleware, isAdmin, getMerchants);
 
 router.get('/admins', authMiddleware, isAdmin, getAdmins);
 
