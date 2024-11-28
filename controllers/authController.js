@@ -1,9 +1,10 @@
 const jwt = require('jsonwebtoken');
 const supabase = require('../config/supabase');
 
+// controllers/authController.js
 const register = async (req, res) => {
   try {
-    const { email, password, fullName, userType } = req.body;
+    const { email, password, fullName, userType, pfpImg, bgImg } = req.body;
 
     // Validate user type
     const validUserTypes = ['customer', 'merchant', 'admin'];
@@ -33,7 +34,9 @@ const register = async (req, res) => {
           email: authUser.user.email,
           full_name: fullName,
           user_type: userType,
-          status: 'active'
+          status: 'active',
+          pfp_img: pfpImg,
+          bg_img: bgImg
         }
       ])
       .select()
@@ -61,7 +64,9 @@ const register = async (req, res) => {
       user: {
         email: authUser.user.email,
         fullName: fullName,
-        userType: userType
+        userType: userType,
+        pfpImg: pfpImg,
+        bgImg: bgImg
       }
     });
   } catch (error) {

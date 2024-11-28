@@ -1,5 +1,6 @@
 const supabase = require('../config/supabase');
 
+// controllers/productController.js
 const createProduct = async (req, res) => {
   try {
     const { title, description, price, category, images, stock, specifications, ...customFields } = req.body;
@@ -12,7 +13,7 @@ const createProduct = async (req, res) => {
       description,
       price,
       category,
-      images,
+      images: JSON.stringify(images), // Store images as a JSON string
       stock,
       specifications
     };
