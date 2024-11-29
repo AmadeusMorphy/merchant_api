@@ -122,21 +122,54 @@ const getAdmins = async (req, res) => {
 
 const getProductsByMerchant = async (req, res) => {
   try {
-    const { merchant_id } = req.query; // Retrieve merchant_id from query params
+    const { 
+      merchant_id, 
+      page = 1, 
+      limit = 20 
+    } = req.query;
+
+    // Convert page and limit to numbers
+    const pageNum = parseInt(page, 10);
+    const limitNum = parseInt(limit, 10);
 
     if (!merchant_id) {
       return res.status(400).json({ error: 'Merchant ID is required' });
     }
 
+    // Calculate offset
+    const offset = (pageNum - 1) * limitNum;
+
+    // Query to get total count of products for this merchant
+    const { count: totalProducts, error: countError } = await supabase
+      .from('products')
+      .select('*', { count: 'exact' })
+      .eq('merchant_id', merchant_id);
+
+    if (countError) throw countError;
+
+    // Query to get paginated products
     const { data: products, error } = await supabase
       .from('products')
-      .select('*') // Include specific fields or relations as needed
-      .eq('merchant_id', merchant_id); // Filter by merchant_id
+      .select('*')
+      .eq('merchant_id', merchant_id)
+      .range(offset, offset + limitNum - 1);
 
     if (error) throw error;
 
-    res.json({ products });
+    // Calculate pagination metadata
+    const pagination = {
+      total: totalProducts,
+      page: pageNum,
+      limit: limitNum,
+      totalPages: Math.ceil(totalProducts / limitNum)
+    };
+
+    res.json({ 
+      pagination,
+      products 
+    });
   } catch (error) {
+    console.error('Error fetching merchant products:', error);
     res.status(500).json({ error: error.message });
   }
 };
