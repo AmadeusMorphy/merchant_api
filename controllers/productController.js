@@ -3,7 +3,7 @@ const supabase = require('../config/supabase');
 // controllers/productController.js
 const createProduct = async (req, res) => {
   try {
-    const { title, description, price, category, images, stock, specifications, ...customFields } = req.body;
+    const { title, description, price, category, images, stock, specifications, countryOfOrigin, ...customFields } = req.body;
     const merchantId = req.user.userId;
 
     // Base product data
@@ -13,9 +13,10 @@ const createProduct = async (req, res) => {
       description,
       price,
       category,
-      images: JSON.stringify(images), // Store images as a JSON string
+      images, // Use the processed images array
       stock,
-      specifications
+      specifications,
+      countryOfOrigin
     };
 
     // Get the current table columns
@@ -72,7 +73,7 @@ const createProduct = async (req, res) => {
 
 const getProducts = async (req, res) => {
   try {
-    const { page = 1, limit = 20, category, search, minPrice, maxPrice, merchant } = req.query;
+    const { page = 1, limit = 20, category, search, minPrice, maxPrice, merchant, countryOfOrigin } = req.query;
     const offset = (page - 1) * limit;
 
     let query = supabase
@@ -84,6 +85,7 @@ const getProducts = async (req, res) => {
     if (search) query = query.ilike('title', `%${search}%`);
     if (minPrice) query = query.gte('price', minPrice);
     if (maxPrice) query = query.lte('price', maxPrice);
+    if (countryOfOrigin) query = query.lte('countryOfOrigin', countryOfOrigin);
 
     query = query.range(offset, offset + limit - 1);
 
