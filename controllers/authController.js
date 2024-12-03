@@ -34,7 +34,7 @@ const register = async (req, res) => {
           email: authUser.user.email,
           full_name: fullName,
           user_type: userType,
-          status: 'active',
+          status: 'InActive',
           pfp_img: pfpImg,
           bg_img: bgImg
         }
@@ -58,6 +58,12 @@ const register = async (req, res) => {
       { expiresIn: '24h' }
     );
 
+    const { data: userDetails, error: userDetailsError } = await supabase
+    .from('users') // Replace with your table name
+    .select('status')
+    .eq('id', authUser.user.id) // Assuming the user's ID matches the table's `id` column
+    .single();
+
     res.status(201).json({
       userId: authUser.user.id,
       token,
@@ -65,6 +71,7 @@ const register = async (req, res) => {
         email: authUser.user.email,
         fullName: fullName,
         userType: userType,
+        status: userDetails.status,
         pfpImg: pfpImg,
         bgImg: bgImg
       }
@@ -107,6 +114,7 @@ const login = async (req, res) => {
       {
         userId,
         email: authData.user.email,
+        status: authData.user.user_metadata.status,
         role: authData.user.user_metadata.user_type,
       },
       process.env.JWT_SECRET,
@@ -126,6 +134,12 @@ const login = async (req, res) => {
       return res.status(500).json({ error: 'Failed to store new active token' });
     }
 
+    const { data: userDetails, error: userDetailsError } = await supabase
+    .from('users') // Replace with your table name
+    .select('status, user_type, full_name')
+    .eq('id', userId) // Assuming the user's ID matches the table's `id` column
+    .single();
+
     // Return the new token
     res.json({
       token,
@@ -134,6 +148,7 @@ const login = async (req, res) => {
         email: authData.user.email,
         fullName: authData.user.user_metadata.full_name,
         userType: authData.user.user_metadata.user_type,
+        status: userDetails.status
       },
     });
   } catch (error) {
