@@ -59,9 +59,9 @@ const register = async (req, res) => {
     );
 
     const { data: userDetails, error: userDetailsError } = await supabase
-    .from('users') // Replace with your table name
+    .from('users')
     .select('status')
-    .eq('id', authUser.user.id) // Assuming the user's ID matches the table's `id` column
+    .eq('id', authUser.user.id)
     .single();
 
     res.status(201).json({
@@ -106,7 +106,6 @@ const login = async (req, res) => {
 
     if (removeError) {
       console.error('Failed to remove existing tokens:', removeError);
-      // Not a critical error, so we'll continue
     }
 
     // Generate a new JWT
@@ -135,9 +134,9 @@ const login = async (req, res) => {
     }
 
     const { data: userDetails, error: userDetailsError } = await supabase
-    .from('users') // Replace with your table name
+    .from('users')
     .select('status, user_type, full_name')
-    .eq('id', userId) // Assuming the user's ID matches the table's `id` column
+    .eq('id', userId)
     .single();
 
     // Return the new token
@@ -160,7 +159,7 @@ const login = async (req, res) => {
 
 const logout = async (req, res) => {
   try {
-    const token = req.headers.authorization?.split(' ')[1]; // Extract token from Authorization header
+    const token = req.headers.authorization?.split(' ')[1];
 
     if (!token) {
       return res.status(400).json({ error: 'Token is required' });

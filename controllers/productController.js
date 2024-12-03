@@ -3,7 +3,7 @@ const supabase = require('../config/supabase');
 // controllers/productController.js
 const createProduct = async (req, res) => {
   try {
-    const { title, description, price, category, images, stock, specifications, countryOfOrigin, ...customFields } = req.body;
+    const { title, description, price, category, mainImage, prodColors, stock, specifications, countryOfOrigin, ...customFields } = req.body;
     const merchantId = req.user.userId;
 
     // Base product data
@@ -13,7 +13,8 @@ const createProduct = async (req, res) => {
       description,
       price,
       category,
-      images, // Use the processed images array
+      mainImage,
+      prodColors, // Use the processed images array
       stock,
       specifications,
       countryOfOrigin
@@ -107,20 +108,6 @@ const getProducts = async (req, res) => {
   }
 };
 
-const getAdmins = async (req, res) => {
-  try {
-    const { data: merchants, error } = await supabase
-      .from('users')
-      .select('*')
-      .eq('user_type', 'admin');
-
-    if (error) throw error;
-
-    res.json(merchants);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
 
 const getProductsByMerchant = async (req, res) => {
   try {
