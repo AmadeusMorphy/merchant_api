@@ -8,7 +8,7 @@ const {
   deleteMerchantProfile, 
   getAllMerchants,
 } = require('../controllers/merchantController');
-const { authMiddleware, isMerchant, isAdmin } = require('../middleware/auth');
+const { authMiddleware, isMerchant, isAdmin, isAdminOrMerchant } = require('../middleware/auth');
 
 // Validation middleware
 const validateMerchantProfile = [
@@ -50,6 +50,7 @@ router.get(
 router.get(
     '/',
     authMiddleware,
+    isAdmin,
     getAllMerchants
 )
 
@@ -57,6 +58,7 @@ router.get(
 router.put(
   '/profile', 
   authMiddleware,
+  isAdminOrMerchant,
   validateMerchantProfile,
   updateMerchantProfile
 );
@@ -65,7 +67,7 @@ router.put(
 router.patch(
   '/profile', 
   authMiddleware,
-  isMerchant,
+  isAdminOrMerchant,
   updateMerchantProfile
 );
 
@@ -73,6 +75,7 @@ router.patch(
 router.delete(
   '/profile', 
   authMiddleware,
+  isAdminOrMerchant,
   deleteMerchantProfile
 );
 
