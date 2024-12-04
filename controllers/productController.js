@@ -14,7 +14,7 @@ const createProduct = async (req, res) => {
       price,
       category,
       mainImage,
-      prodColors, // Use the processed images array
+      prodColors,
       stock,
       specifications,
       countryOfOrigin
@@ -57,13 +57,40 @@ const createProduct = async (req, res) => {
     }
 
     // Insert the product
-    const { data: product, error } = await supabase
+    const { data: product, error: productError } = await supabase
       .from('products')
       .insert([productData])
       .select()
       .single();
 
-    if (error) throw error;
+    if (productError) throw productError;
+
+    // Fetch the merchant's current products
+    const { data: merchantData, error: merchantFetchError } = await supabase
+      .from('merchants')
+      .select('products')
+      .eq('id', merchantId)
+      .single();
+
+    if (merchantFetchError) {
+      console.error('Error fetching merchant data:', merchantFetchError);
+      return res.status(500).json({ error: 'Error updating merchant data' });
+    }
+
+    // Prepare the updated products array
+    const updatedProducts = merchantData.products || [];
+    updatedProducts.push({ id: product.id });
+
+    // Update the merchant's products
+    const { error: merchantUpdateError } = await supabase
+      .from('merchants')
+      .update({ products: updatedProducts })
+      .eq('id', merchantId);
+
+    if (merchantUpdateError) {
+      console.error('Error updating merchant products:', merchantUpdateError);
+      return res.status(500).json({ error: 'Error updating merchant data' });
+    }
 
     res.status(201).json(product);
   } catch (error) {
