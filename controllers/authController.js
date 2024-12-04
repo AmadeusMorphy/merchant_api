@@ -34,7 +34,7 @@ const register = async (req, res) => {
           email: authUser.user.email,
           full_name: fullName,
           user_type: userType,
-          status: 'InActive',
+          status: 'Active',
           pfp_img: pfpImg,
           bg_img: bgImg
         }

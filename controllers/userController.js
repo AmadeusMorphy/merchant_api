@@ -49,6 +49,44 @@ const getAllUsers = async (req, res) => {
 };
 
 
+const getCustomers = async (req, res) => {
+  try {
+    console.log('Authenticated User:', req.user);
+    const { page = 1, limit = 20 } = req.query;
+    const offset = (page - 1) * limit;
+
+    console.log('Customer Query Params:', { page, limit, offset });
+
+    const query = supabase
+      .from('users')
+      .select('*', { count: 'exact' })
+      .eq('user_type', 'customer')
+      .range(offset, offset + limit - 1);
+
+    const { data: customers, count, error } = await query;
+
+    console.log('Customer Query Result:', {
+      customers,
+      count,
+      error
+    });
+
+    if (error) throw error;
+
+    res.json({
+      pagination: {
+        total: count,
+        pages: Math.ceil(count / limit),
+        current: parseInt(page),
+      },
+      customers,
+    });
+  } catch (error) {
+    console.error('Full Error in getCustomers:', error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
 const getMerchants = async (req, res) => {
   try {
     console.log('Authenticated User:', req.user);
@@ -148,6 +186,7 @@ const getAdminsOrMerchants = async (req, res) => {
 module.exports = {
   getCurrentUser,
   getAllUsers,
+  getCustomers,
   getMerchants,
   getAdmins
 };
