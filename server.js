@@ -5,6 +5,7 @@ const fileUpload = require('express-fileupload');
 const userRoutes = require('./routes/users');
 const authRoutes = require('./routes/auth');
 const productRoutes = require('./routes/products');
+const storeRoutes = require('./routes/store');
 const imageRoutes = require('./routes/images');
 const dataRoutes = require('./routes/data');
 const merchantRoutes = require('./routes/merchant');
@@ -25,6 +26,7 @@ app.use(fileUpload()); // Add this line for handling file uploads
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
+app.use('/api/stores', storeRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/images', imageRoutes);
 app.use('/api/data', dataRoutes);
