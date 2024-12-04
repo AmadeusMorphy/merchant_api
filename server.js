@@ -5,9 +5,14 @@ const fileUpload = require('express-fileupload');
 const userRoutes = require('./routes/users');
 const authRoutes = require('./routes/auth');
 const productRoutes = require('./routes/products');
-const imageRoutes = require('./routes/images'); // Add this line
-const dataRoutes = require('./routes/data'); // Add this line
+const imageRoutes = require('./routes/images');
+const dataRoutes = require('./routes/data');
+const merchantRoutes = require('./routes/merchant');
 require('dotenv').config();
+
+
+delete require.cache[require.resolve('./routes/merchant')];
+delete require.cache[require.resolve('./controllers/merchantController')];
 
 const app = express();
 
@@ -23,6 +28,7 @@ app.use('/api/products', productRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/images', imageRoutes);
 app.use('/api/data', dataRoutes);
+app.use('/api/merchants', merchantRoutes);
 
 const PORT = process.env.PORT || 3000;
 
