@@ -60,8 +60,37 @@ const createStore = async (req, res) => {
       console.error('Error creating product:', error);
       res.status(500).json({ error: error.message });
     }
-  };
+};
+
+const getStoreById = async (req, res) => {
+  try {
+    const { id } = req.query;
+    if (!id) {
+      return res.status(400).json({ error: 'Store ID is required' });
+    }
+
+    const { data, error } = await supabase
+      .from('stores')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116') {
+        return res.status(404).json({ error: 'Store profile not found' });
+      }
+      console.error('Error fetching store profile:', error);
+      return res.status(500).json({ error: 'Failed to fetch store' });
+    }
+
+    res.json(data);
+  } catch (error) {
+    console.error('store profile fetch error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
 
   module.exports = {
-    createStore
+    createStore,
+    getStoreById
   };
