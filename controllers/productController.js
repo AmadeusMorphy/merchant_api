@@ -3,7 +3,27 @@ const supabase = require('../config/supabase');
 // controllers/productController.js
 const createProduct = async (req, res) => {
   try {
-    const { title, description, price, category, mainImage, prodColors, stock, specifications, countryOfOrigin, ...customFields } = req.body;
+    const {
+      title,
+      description,
+      price,
+      category,
+      mainImage,
+      images,
+      prodColors,
+      stock,
+      specifications,
+      countryOfOrigin,
+      height,
+      width,
+      unit_size,
+      sizes,
+      discount,
+      tags,
+      rating,
+      related_products,
+      ...customFields
+    } = req.body;
     const merchantId = req.user.userId;
 
     // Base product data
@@ -14,10 +34,19 @@ const createProduct = async (req, res) => {
       price,
       category,
       mainImage,
+      images,
       prodColors,
       stock,
       specifications,
-      countryOfOrigin
+      countryOfOrigin,
+      height,
+      width,
+      unit_size,
+      sizes,
+      discount,
+      tags,
+      rating,
+      related_products,
     };
 
     // Get the current table columns
@@ -138,10 +167,10 @@ const getProducts = async (req, res) => {
 
 const getProductsByMerchant = async (req, res) => {
   try {
-    const { 
-      merchant_id, 
-      page = 1, 
-      limit = 20 
+    const {
+      merchant_id,
+      page = 1,
+      limit = 20
     } = req.query;
 
     // Convert page and limit to numbers
@@ -180,9 +209,9 @@ const getProductsByMerchant = async (req, res) => {
       totalPages: Math.ceil(totalProducts / limitNum)
     };
 
-    res.json({ 
+    res.json({
       pagination,
-      products 
+      products
     });
   } catch (error) {
     console.error('Error fetching merchant products:', error);
