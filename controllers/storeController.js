@@ -17,7 +17,7 @@ const createStore = async (req, res) => {
       images,
       categories,
       reg_number,
-      status: 'InActive'
+      status: 'Under review'
     };
 
 
@@ -67,11 +67,11 @@ const createStore = async (req, res) => {
 const getAllStores = async (req, res) => {
   try {
     const { page = 1, limit = 20, sort = 'created_at', order = 'desc' } = req.query;
-    
+
     // Convert page and limit to numbers
     const pageNum = parseInt(page, 10);
     const limitNum = parseInt(limit, 10);
-    
+
     // Calculate offset
     const offset = (pageNum - 1) * limitNum;
 
@@ -265,7 +265,6 @@ const deleteStore = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
-
 
 module.exports = {
   createStore,
