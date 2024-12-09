@@ -49,20 +49,20 @@ const register = async (req, res) => {
 
     // Generate JWT
     const token = jwt.sign(
-      { 
-        userId: authUser.user.id, 
+      {
+        userId: authUser.user.id,
         email: authUser.user.email,
-        role: userType 
+        role: userType
       },
       process.env.JWT_SECRET,
       { expiresIn: '24h' }
     );
 
     const { data: userDetails, error: userDetailsError } = await supabase
-    .from('users')
-    .select('status')
-    .eq('id', authUser.user.id)
-    .single();
+      .from('users')
+      .select('status')
+      .eq('id', authUser.user.id)
+      .single();
 
     res.status(201).json({
       userId: authUser.user.id,
@@ -117,11 +117,11 @@ const login = async (req, res) => {
         role: authData.user.user_metadata.user_type,
       },
       process.env.JWT_SECRET,
-      { expiresIn: '24h' }
+      { expiresIn: '30d' }
     );
 
     const expiresAt = new Date();
-    expiresAt.setHours(expiresAt.getHours() + 24); // Token expiry: 24 hours
+    expiresAt.setMonth(expiresAt.getMonth() + 1); // Token expiry: 1 month
 
     // Insert the new token into the `active_tokens` table
     const { error: insertError } = await supabase
@@ -134,10 +134,10 @@ const login = async (req, res) => {
     }
 
     const { data: userDetails, error: userDetailsError } = await supabase
-    .from('users')
-    .select('status, user_type, full_name')
-    .eq('id', userId)
-    .single();
+      .from('users')
+      .select('status, user_type, full_name')
+      .eq('id', userId)
+      .single();
 
     // Return the new token
     res.json({
@@ -187,10 +187,10 @@ const logout = async (req, res) => {
     // Add token to blacklist with its expiration time
     const { error: blacklistError } = await supabase
       .from('blacklisted_tokens')
-      .insert([{ 
-        token, 
+      .insert([{
+        token,
         expires_at: new Date(decoded.exp * 1000),
-        user_id: decoded.userId 
+        user_id: decoded.userId
       }]);
 
     if (blacklistError) {
@@ -201,12 +201,12 @@ const logout = async (req, res) => {
     res.status(200).json({ message: 'Logged out successfully' });
   } catch (error) {
     console.error('Logout error:', error);
-    
+
     // Handle specific JWT verification errors
     if (error.name === 'JsonWebTokenError') {
       return res.status(401).json({ error: 'Invalid token' });
     }
-    
+
     res.status(500).json({ error: 'Failed to log out', details: error.message });
   }
 };
