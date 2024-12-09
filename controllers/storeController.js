@@ -205,23 +205,9 @@ const updateStore = async (req, res) => {
   try {
     const { id } = req.query;
     const { name, location, products, store_logo, store_bg, images, categories, reg_number, status } = req.body;
-    const merchantId = req.user.userId;
 
     if (!id) {
       return res.status(400).json({ error: 'Store ID is required' });
-    }
-
-    // Check if the store belongs to the merchant
-    const { data: existingStore, error: fetchError } = await supabase
-      .from('stores')
-      .select('merchant_id')
-      .eq('id', id)
-      .single();
-
-    if (fetchError) throw fetchError;
-
-    if (!existingStore || existingStore.merchant_id !== merchantId) {
-      return res.status(403).json({ error: 'Unauthorized to update this store' });
     }
 
     // Prepare update data
@@ -260,23 +246,9 @@ const updateStore = async (req, res) => {
 const deleteStore = async (req, res) => {
   try {
     const { id } = req.query;
-    const merchantId = req.user.userId;
 
     if (!id) {
       return res.status(400).json({ error: 'Store ID is required' });
-    }
-
-    // Check if the store belongs to the merchant
-    const { data: existingStore, error: fetchError } = await supabase
-      .from('stores')
-      .select('merchant_id')
-      .eq('id', id)
-      .single();
-
-    if (fetchError) throw fetchError;
-
-    if (!existingStore || existingStore.merchant_id !== merchantId) {
-      return res.status(403).json({ error: 'Unauthorized to delete this store' });
     }
 
     // Delete the store
@@ -286,24 +258,6 @@ const deleteStore = async (req, res) => {
       .eq('id', id);
 
     if (deleteError) throw deleteError;
-
-    // Update the merchant's stores array
-    const { data: merchantData, error: merchantFetchError } = await supabase
-      .from('merchants')
-      .select('stores')
-      .eq('id', merchantId)
-      .single();
-
-    if (merchantFetchError) throw merchantFetchError;
-
-    const updatedStores = (merchantData.stores || []).filter(store => store.id !== id);
-
-    const { error: merchantUpdateError } = await supabase
-      .from('merchants')
-      .update({ stores: updatedStores })
-      .eq('id', merchantId);
-
-    if (merchantUpdateError) throw merchantUpdateError;
 
     res.json({ message: 'Store deleted successfully' });
   } catch (error) {
