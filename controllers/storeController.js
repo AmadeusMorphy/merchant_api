@@ -170,7 +170,7 @@ const getStoreByMerchantId = async (req, res) => {
     const { count: totalStores, error: countError } = await supabase
       .from('stores')
       .select('*', { count: 'exact' })
-      .eq('id', id);
+      .eq('merchant_id', id);
 
     if (countError) throw countError;
 
@@ -178,7 +178,7 @@ const getStoreByMerchantId = async (req, res) => {
     const { data: stores, error } = await supabase
       .from('stores')
       .select('*')
-      .eq('id', id)
+      .eq('merchant_id', id)
       .range(offset, offset + limitNum - 1);
 
     if (error) throw error;
