@@ -22,13 +22,13 @@ const getAllUsers = async (req, res) => {
     const offset = (page - 1) * limit;
 
     console.log('Page:', page, 'Limit:', limit, 'Offset:', offset);
-    
+
     const query = supabase
       .from('users')
       .select('id, email, full_name, user_type, status', { count: 'exact' })
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1);
-    
+
     const { data: users, count, error } = await query;
 
     if (error) throw error;
@@ -48,6 +48,33 @@ const getAllUsers = async (req, res) => {
   }
 };
 
+const getUserById = async (req, res) => {
+  try {
+    const { id } = req.query;
+    if (!id) {
+      return res.status(400).json({ error: 'User ID is required' });
+    }
+
+    const { data, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116') {
+        return res.status(404).json({ error: 'User profile not found' });
+      }
+      console.error('Error fetching user profile:', error);
+      return res.status(500).json({ error: 'Failed to fetch user profile' });
+    }
+
+    res.json(data);
+  } catch (error) {
+    console.error('user profile fetch error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
 
 const getCustomers = async (req, res) => {
   try {
@@ -182,12 +209,83 @@ const getAdminsOrMerchants = async (req, res) => {
   }
 };
 
+const updateUser = async (req, res) => {
+  try {
+    const { id } = req.query;
+    const { full_name, email, user_type, status } = req.body;
+
+    if (!id) {
+      return res.status(400).json({ error: 'User ID is required' });
+    }
+
+    const { data, error } = await supabase
+      .from('users')
+      .update({ full_name, email, user_type, status })
+      .eq('id', id)
+      .single();
+
+    if (error) throw error;
+
+    res.json({ message: 'User updated successfully', user: data });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+const patchUser = async (req, res) => {
+  try {
+    const { id } = req.query;
+    const updateData = req.body;
+
+    if (!id) {
+      return res.status(400).json({ error: 'User ID is required' });
+    }
+
+    const { data, error } = await supabase
+      .from('users')
+      .update(updateData)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    res.json({ message: 'User patched successfully', user: data });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+const deleteUser = async (req, res) => {
+  try {
+    const { id } = req.query;
+
+    if (!id) {
+      return res.status(400).json({ error: 'User ID is required' });
+    }
+
+    const { data, error } = await supabase
+      .from('users')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw error;
+
+    res.json({ message: 'User deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
 
 module.exports = {
   getCurrentUser,
   getAllUsers,
+  getUserById,
   getCustomers,
   getMerchants,
-  getAdmins
+  getAdmins,
+  updateUser,
+  patchUser,
+  deleteUser
 };
 

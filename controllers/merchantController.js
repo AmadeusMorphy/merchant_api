@@ -3,12 +3,12 @@ const supabase = require('../config/supabase');
 // Create a new merchant profile
 const createMerchantProfile = async (req, res) => {
   try {
-    const { 
-      email, 
-      full_name, 
-      country, 
-      pfp_img, 
-      bg_img, 
+    const {
+      email,
+      full_name,
+      country,
+      pfp_img,
+      bg_img,
       products,
       stores
     } = req.body;
@@ -51,7 +51,8 @@ const createMerchantProfile = async (req, res) => {
         bg_img,
         products: products || [],
         stores: stores || [],
-        country
+        country,
+        theme: 'light'
       })
       .select()
       .single();
@@ -61,9 +62,9 @@ const createMerchantProfile = async (req, res) => {
       return res.status(500).json({ error: 'Failed to create merchant profile', details: error.message });
     }
 
-    res.status(201).json({ 
-      message: 'Merchant profile created successfully', 
-      merchant: data 
+    res.status(201).json({
+      message: 'Merchant profile created successfully',
+      merchant: data
     });
   } catch (error) {
     console.error('Merchant profile creation error:', error);
@@ -101,41 +102,41 @@ const getMerchantProfile = async (req, res) => {
 };
 
 const getAllMerchants = async (req, res) => {
-    try {
-      console.log('Authenticated User:', req.user);
-      const { page = 1, limit = 20 } = req.query;
-      const offset = (page - 1) * limit;
-  
-      console.log('Merchant Query Params:', { page, limit, offset });
-  
-      const query = supabase
-        .from('merchants')
-        .select('*', { count: 'exact' })
-        .range(offset, offset + limit - 1);
-  
-      const { data: merchants, count, error } = await query;
-  
-      console.log('Merchant Query Result:', {
-        merchants,
-        count,
-        error
-      });
-  
-      if (error) throw error;
-  
-      res.json({
-        pagination: {
-          total: count,
-          pages: Math.ceil(count / limit),
-          current: parseInt(page),
-        },
-        merchants,
-      });
-    } catch (error) {
-      console.error('Full Error in getMerchants:', error);
-      res.status(500).json({ error: error.message });
-    }
-  };
+  try {
+    console.log('Authenticated User:', req.user);
+    const { page = 1, limit = 20 } = req.query;
+    const offset = (page - 1) * limit;
+
+    console.log('Merchant Query Params:', { page, limit, offset });
+
+    const query = supabase
+      .from('merchants')
+      .select('*', { count: 'exact' })
+      .range(offset, offset + limit - 1);
+
+    const { data: merchants, count, error } = await query;
+
+    console.log('Merchant Query Result:', {
+      merchants,
+      count,
+      error
+    });
+
+    if (error) throw error;
+
+    res.json({
+      pagination: {
+        total: count,
+        pages: Math.ceil(count / limit),
+        current: parseInt(page),
+      },
+      merchants,
+    });
+  } catch (error) {
+    console.error('Full Error in getMerchants:', error);
+    res.status(500).json({ error: error.message });
+  }
+};
 
 // Update merchant profile
 const updateMerchantProfile = async (req, res) => {
@@ -151,7 +152,7 @@ const updateMerchantProfile = async (req, res) => {
     delete updateData.id;
     delete updateData.created_at;
     delete updateData.email;
-    delete updateData.user_type; 
+    delete updateData.user_type;
 
     const { data, error } = await supabase
       .from('merchants')
@@ -165,9 +166,9 @@ const updateMerchantProfile = async (req, res) => {
       return res.status(500).json({ error: 'Failed to update merchant profile', details: error.message });
     }
 
-    res.json({ 
-      message: 'Merchant profile updated successfully', 
-      merchant: data 
+    res.json({
+      message: 'Merchant profile updated successfully',
+      merchant: data
     });
   } catch (error) {
     console.error('Merchant profile update error:', error);
