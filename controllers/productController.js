@@ -142,8 +142,12 @@ const getProducts = async (req, res) => {
     if (search) query = query.ilike('title', `%${search}%`);
     if (minPrice) query = query.gte('price', minPrice);
     if (maxPrice) query = query.lte('price', maxPrice);
-    if (countryOfOrigin) query = query.lte('countryOfOrigin', countryOfOrigin);
+    if (countryOfOrigin) query = query.eq('countryOfOrigin', countryOfOrigin);
 
+    // Sort by ascending order based on the last added timestamp
+    query = query.order('created_at', { ascending: false });
+
+    // Apply pagination
     query = query.range(offset, offset + limit - 1);
 
     const { data: products, count, error } = await query;
@@ -155,15 +159,14 @@ const getProducts = async (req, res) => {
         total: count,
         pages: Math.ceil(count / limit),
         current: parseInt(page),
-        limit: parseInt(limit)
+        limit: parseInt(limit),
       },
-      products
+      products,
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
-
 
 const getProductsByMerchant = async (req, res) => {
   try {
@@ -192,11 +195,12 @@ const getProductsByMerchant = async (req, res) => {
 
     if (countError) throw countError;
 
-    // Query to get paginated products
+    // Query to get paginated products in ascending order by date
     const { data: products, error } = await supabase
       .from('products')
       .select('*')
       .eq('merchant_id', merchant_id)
+      .order('created_at', { ascending: false }) // Ensure ascending order
       .range(offset, offset + limitNum - 1);
 
     if (error) throw error;
@@ -218,6 +222,7 @@ const getProductsByMerchant = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
 
 module.exports = {
   createProduct,
