@@ -9,6 +9,7 @@ const storeRoutes = require('./routes/store');
 const imageRoutes = require('./routes/images');
 const dataRoutes = require('./routes/data');
 const merchantRoutes = require('./routes/merchant');
+const ipLocationRoutes = require('./routes/ipLocation');
 require('dotenv').config();
 
 
@@ -31,7 +32,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/images', imageRoutes);
 app.use('/api/data', dataRoutes);
 app.use('/api/merchants', merchantRoutes);
-
+app.use('/api/ipLocation', ipLocationRoutes)
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
