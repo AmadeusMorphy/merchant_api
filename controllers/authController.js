@@ -4,7 +4,7 @@ const supabase = require('../config/supabase');
 // controllers/authController.js
 const register = async (req, res) => {
   try {
-    const { email, password, fullName, userType, pfpImg, bgImg } = req.body;
+    const { email, password, fullName, userType, pfpImg, bgImg, status } = req.body;
 
     // Validate user type
     const validUserTypes = ['customer', 'merchant', 'admin'];
@@ -34,7 +34,7 @@ const register = async (req, res) => {
           email: authUser.user.email,
           full_name: fullName,
           user_type: userType,
-          status: 'Active',
+          status: status || 'Active',
           pfp_img: pfpImg,
           bg_img: bgImg
         }

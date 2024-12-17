@@ -10,7 +10,8 @@ const createMerchantProfile = async (req, res) => {
       pfp_img,
       bg_img,
       products,
-      stores
+      stores,
+      commercial_number
     } = req.body;
 
     // Ensure the user is authenticated and has merchant role
@@ -45,10 +46,11 @@ const createMerchantProfile = async (req, res) => {
         email,
         full_name,
         user_type: userType,
-        status: 'Active',
+        status: 'Pending',
         created_at: new Date().toISOString(),
         pfp_img,
         bg_img,
+        commercial_number,
         products: products || [],
         stores: stores || [],
         country,
@@ -76,6 +78,9 @@ const createMerchantProfile = async (req, res) => {
 const getMerchantProfile = async (req, res) => {
   try {
     const { id } = req.query;
+    const { page = 1, limit = 20 } = req.query;
+    const offset = (page - 1) * limit;
+
     if (!id) {
       return res.status(400).json({ error: 'Merchant ID is required' });
     }
@@ -88,13 +93,29 @@ const getMerchantProfile = async (req, res) => {
 
     if (error) {
       if (error.code === 'PGRST116') {
-        return res.status(404).json({ error: 'Merchant profile not found' });
+        // When merchant is not found, return a structured response similar to getAllMerchants
+        return res.json({
+          pagination: {
+            total: 0,
+            pages: 0,
+            current: parseInt(page),
+          },
+          merchants: [],
+        });
       }
       console.error('Error fetching merchant profile:', error);
       return res.status(500).json({ error: 'Failed to fetch merchant profile' });
     }
 
-    res.json(data);
+    // If merchant is found, return it in a similar structure
+    res.json({
+      pagination: {
+        total: 1,
+        pages: 1,
+        current: parseInt(page),
+      },
+      merchants: [data],
+    });
   } catch (error) {
     console.error('Merchant profile fetch error:', error);
     res.status(500).json({ error: 'Internal server error' });
